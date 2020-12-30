@@ -1,7 +1,7 @@
 {
-  "name": "phaser-test",
-  "version": "1.0.0",
-  "description": "Testing the Phaser game engine",
+  "name": "homestead-kuiper",
+  "version": "0.0.0",
+  "description": "A game about asteroids and homesteading in the 22nd century",
   "main": "index-electron.js",
   "author": "Bloodyaugust <greysonrichey@gmail.com>",
   "license": "MIT",
@@ -12,7 +12,7 @@
     "dist": "rm -rf ./dist && yarn electron-builder --win --publish never"
   },
   "build": {
-    "appId": "com.electron.phaser-test",
+    "appId": "com.electron.homestead-kuiper",
     "files": [
       "index-electron.js",
       "build/*"
