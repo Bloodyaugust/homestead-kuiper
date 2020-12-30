@@ -1,0 +1,45 @@
+{
+  "name": "phaser-test",
+  "version": "1.0.0",
+  "description": "Testing the Phaser game engine",
+  "main": "index-electron.js",
+  "author": "Bloodyaugust <greysonrichey@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "parcel serve index.html",
+    "build": "rm -rf ./build && parcel build index.html -d build/ --public-url ./",
+    "build:electron": "rm -rf ./build && parcel build index-electron.html -d build/ --public-url ./",
+    "dist": "rm -rf ./dist && yarn electron-builder --win --publish never"
+  },
+  "build": {
+    "appId": "com.electron.phaser-test",
+    "files": [
+      "index-electron.js",
+      "build/*"
+    ],
+    "win": {
+      "asarUnpack": [
+        "build/index-electron.html"
+      ],
+      "target": "portable"
+    }
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0-0",
+    "@babel/preset-react": "^7.12.10",
+    "electron": "^11.1.1",
+    "electron-builder": "^22.9.1",
+    "eslint": "^7.16.0",
+    "parcel": "^1.12.4"
+  },
+  "dependencies": {
+    "@babel/preset-env": "^7.12.11",
+    "chance": "^1.1.7",
+    "core-js": "^3.8.1",
+    "phaser": "^3.50.0",
+    "postcss-modules": "^3.2.2",
+    "react": ">=16.6.0",
+    "react-dom": ">=16.6.0",
+    "react-transition-group": "^4.4.1"
+  }
+}
