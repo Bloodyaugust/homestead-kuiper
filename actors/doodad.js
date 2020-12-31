@@ -8,23 +8,11 @@ export class Doodad extends GameObjects.Sprite {
     scene.add.existing(this)
     scene.groups.doodads.add(this)
 
-    this.setActive(false)
-    this.setVisible(false)
     this.setDepth(0)
   }
 
-  kill() {
-    this.setActive(false)
-    this.setVisible(false)
-  }
-
   update(time, delta) {
-    this.y += this.speed * (delta / 1000)
     this.angle += this.rotationSpeed * (delta / 1000)
-
-    if (this.y >= 700) {
-      this.kill()
-    }
   }
 
   spawn(x, y) {
@@ -45,7 +33,6 @@ export class Doodad extends GameObjects.Sprite {
       case 'meteor3':
       case 'meteor4':
         this.setAngle(Math.FloatBetween(0, 360))
-        this.speed = Math.FloatBetween(60, 120)
         this.setScale((((this.speed - 60) / 60) * 0.25) + 0.75)
         this.rotationSpeed = Math.FloatBetween(-60, 60)
         break
@@ -56,12 +43,6 @@ export class Doodad extends GameObjects.Sprite {
         this.setAlpha(0.5)
         this.setAngle(Math.FloatBetween(0, 360))
         this.setScale(0.25)
-        this.speed = Math.FloatBetween(500, 750)
-        this.rotationSpeed = 0
-        break
-    
-      case 'speed':
-        this.speed = Math.FloatBetween(400, 500)
         this.rotationSpeed = 0
         break
     }

@@ -6,6 +6,7 @@ export class DataController {
     this.gameData = gameData
     this.scene = scene
 
+    this.asteroids = this.gameData.sheets.find(sheet => sheet.name === 'asteroids').lines
     this.enemies = this.gameData.sheets.find(sheet => sheet.name === 'enemies').lines
   }
 

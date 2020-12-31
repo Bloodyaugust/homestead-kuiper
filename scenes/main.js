@@ -1,31 +1,26 @@
-import { Scene } from 'phaser'
-import { Player } from '../actors/player'
+import { Math, Scene } from 'phaser'
 import { DataController } from '../controllers/data-controller'
 import { DoodadSpawnerController } from '../controllers/doodad-spawner'
-import { EnemySpawnerController } from '../controllers/enemy-spawner'
+import { SectorGeneratorController } from '../controllers/sector-generator'
+import asteroid from '../res/sprites/asteroid.png'
 import backgrounds from '../res/backgrounds/*.png'
 import doodads from '../res/sprites/doodads/*.png'
 import particles from '../res/sprites/particles/*.png'
-import sprites from '../res/sprites/*.png'
-import enemySprites from '../res/sprites/enemies/*.png'
-import enemyAnimations from '../res/sprites/enemies/*.json'
 import sfx from '../res/sfx/*.ogg'
 import { GameState } from '../constants/game-state'
+import * as dat from 'dat.gui'
 
 export class MainScene extends Scene {
   constructor() {
     super({
-      data: {
-        score: 0
-      },
+      data: {},
       key: 'MainScene'
     })
   }
 
   preload() {
-    this.load.image('player', sprites.player)
-    this.load.image('player-bullet', sprites['player-bullet'])
-    this.load.image('spark', sprites.spark)
+    this.load.image('asteroid', asteroid)
+
     this.load.image('layer1', backgrounds.layer1)
 
     Object.keys(doodads).forEach((doodadKey) => {
@@ -34,40 +29,31 @@ export class MainScene extends Scene {
     Object.keys(particles).forEach((particleKey) => {
       this.load.image(particleKey, particles[particleKey])
     })
-    Object.keys(enemySprites).forEach((enemySpriteKey) => {
-      if (enemyAnimations[enemySpriteKey]) {
-        this.load.aseprite(enemySpriteKey, enemySprites[enemySpriteKey], enemyAnimations[enemySpriteKey])
-      } else {
-        this.load.image(enemySpriteKey, enemySprites[enemySpriteKey])
-      }
-    })
 
     this.load.audio('explosion', sfx.explosion)
-    this.load.audio('laser', sfx.laser)
-    this.load.audio('lose', sfx.lose)
   }
   
   create() {
-    Object.keys(enemyAnimations).forEach((enemyAnimationKey) => {
-      this.anims.createFromAseprite(enemyAnimationKey)
+    this.groups = {
+      asteroids: this.physics.add.group({name: 'asteroids', runChildUpdate: true}),
+      doodads: this.add.group({name: 'doodads', runChildUpdate: true})
+    }
+
+    this.datGUI = new dat.GUI({
+      name: 'Dev Tools'
     })
 
-    this.groups = {
-      bullets: this.physics.add.group({name: 'bullets'}),
-      doodads: this.add.group({name: 'doodads', runChildUpdate: true}),
-      enemies: this.physics.add.group({name: 'enemies', runChildUpdate: true}),
-      player: this.physics.add.group({name: 'player'})
-    }
+    this.cursorKeys = this.input.keyboard.createCursorKeys()
 
     this.dataController = new DataController(this)
     this.controllers = [
       this.dataController,
-      new EnemySpawnerController(this),
+      new SectorGeneratorController(this),
       new DoodadSpawnerController(this)
     ]
 
     this.backgrounds = []
-    this.backgrounds.push(this.add.tileSprite(0, 0, this.game.config.width, this.game.config.height, 'layer1').setOrigin(0, 0).setDepth(-1))
+    this.backgrounds.push(this.add.tileSprite(400, 300, this.game.config.width, this.game.config.height, 'layer1').setScrollFactor(0).setDepth(-1))
 
     this.data.events.on('changedata', (parent, key, value, previousValue) => {
       window.dispatchEvent(new CustomEvent('gameStateChanged', {
@@ -91,11 +77,6 @@ export class MainScene extends Scene {
             break
         }
       }
-
-      if (key === 'score' && value > this.data.get('highScore')) {
-        this.data.set('highScore', value)
-        localStorage.setItem('highScore', value)
-      }
     }, this)
 
     this.data.events.on('setdata', (parent, key, value) => {
@@ -104,12 +85,8 @@ export class MainScene extends Scene {
       }))
     }, this)
 
-    this.data.set('game', GameState.GAME_OVER)
-    this.data.set('highScore', localStorage.getItem('highScore') || 0)
-    this.data.set('view', GameState.VIEW_MAIN_MENU)
-
-    new Player(this, 400, 550)
-    this.scene.pause('MainScene')
+    this.data.set('game', GameState.GAME_PLAYING)
+    this.data.set('view', GameState.VIEW_GAME_HUD)
 
     window.dispatchEvent(new CustomEvent('mainSceneCreated', {
       detail: {
@@ -120,9 +97,15 @@ export class MainScene extends Scene {
     this.events.once('shutdown', () => {
       this.data.events.off('setdata')
       this.data.events.off('changedata')
-
-      this.data.set('score', 0)
     }, this)
+
+    this.cameraTarget = this.add.circle(0, 0, 16).setStrokeStyle(2, 0xff0000)
+    
+    document.addEventListener('wheel', (event) => {
+      this.cameras.main.zoom = Math.Clamp(this.cameras.main.zoom - ((event.deltaY / 100) * 0.05), 0.25, 1)
+    })
+    this.cameras.main.zoom = 0.25
+    this.cameras.main.startFollow(this.cameraTarget, false)
   }
 
   update(time, delta) {
@@ -130,10 +113,25 @@ export class MainScene extends Scene {
       detail: {delta}
     }))
 
+    if (this.cursorKeys.left.isDown) {
+      this.cameraTarget.x -= (delta / 1000) * 500
+    }
+    if (this.cursorKeys.right.isDown) {
+      this.cameraTarget.x += (delta / 1000) * 500
+    }
+    if (this.cursorKeys.up.isDown) {
+      this.cameraTarget.y -= (delta / 1000) * 500
+    }
+    if (this.cursorKeys.down.isDown) {
+      this.cameraTarget.y += (delta / 1000) * 500
+    }
+
     this.controllers.forEach((controller) => {
       controller.update(time, delta)
     })
+    this.backgrounds[0].setDisplaySize(this.cameras.main.displayWidth, this.cameras.main.displayHeight)
 
-    this.backgrounds[0].tilePositionY -= 15 * (delta / 1000)
+    this.backgrounds[0].tilePositionX = this.cameraTarget.x / 50
+    this.backgrounds[0].tilePositionY = this.cameraTarget.y / 50
   }
 }

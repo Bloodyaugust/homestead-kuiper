@@ -16,7 +16,7 @@ export class DoodadSpawnerController {
     if (this.scene.groups.doodads.getFirstDead()) {
       const doodad = this.scene.groups.doodads.getFirstDead()
 
-      doodad.spawn(Math.Between(-50, 850), Math.Between(-700, -100))
+      doodad.spawn(Math.Between(-50, 850), Math.Between(-50, 650))
     }
   }
 }
